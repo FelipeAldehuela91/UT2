@@ -1,0 +1,52 @@
+services:
+  www:
+    build: .
+    image: daw/lamp-apache-php8-sdf:1.0
+    ports: 
+        - "9000:80"
+    volumes:
+        - ./www:/var/www/html
+    depends_on:
+        - db
+    networks:
+        - lamp-network
+
+  db:
+    image: mysql:8.0
+    container_name: lamp-mysql-sdf
+    ports: 
+        - "3399:3306"
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+        MYSQL_DATABASE: dbname
+        MYSQL_ROOT_PASSWORD: test 
+        MYSQL_USER: lamp
+        MYSQL_PASSWORD: lamp
+    volumes:
+        - ./dump:/docker-entrypoint-initdb.d
+        - ./conf:/etc/mysql/conf.d
+        - db_data:/var/lib/mysql
+    networks:
+        - lamp-network
+
+  phpmyadmin:
+      image: phpmyadmin/phpmyadmin
+      container_name: lamp-phpmyadmin-sdf
+      depends_on: 
+          - db
+      ports:
+          - 8900:80
+      environment:
+          MYSQL_USER: lamp
+          MYSQL_PASSWORD: lamp
+          MYSQL_ROOT_PASSWORD: test 
+      networks:
+          - lamp-network
+
+volumes:
+    db_data: 
+       driver: local
+
+networks:
+    lamp-network:
+        driver: bridge
